@@ -171,7 +171,45 @@ class Battleship(Game):
 
     def apply_action(self, action: BattleshipAction) -> None:
         """ Apply the given action to the game """
-        pass
+        if not self.state or not action:
+            return
+
+        current_player = self.state.players[self.state.idx_player_active]
+        opponent = self.state.players[1 - self.state.idx_player_active]
+
+        if self.state.phase == GamePhase.SETUP:
+            if action.action_type == ActionType.SET_SHIP:
+                # Add ship to current player's fleet
+                ship = Ship(action.ship_name, len(action.location), action.location)
+                current_player.ships.append(ship)
+                
+                # Check if all ships are placed
+                if all(len(player.ships) == 5 for player in self.state.players):
+                    self.state.phase = GamePhase.RUNNING
+                else:
+                    # Switch to next player if current player placed all ships
+                    if len(current_player.ships) == 5:
+                        self.state.idx_player_active = 1 - self.state.idx_player_active
+
+        elif self.state.phase == GamePhase.RUNNING:
+            if action.action_type == ActionType.SHOOT:
+                shot_location = action.location[0]
+                current_player.shots.append(shot_location)
+                
+                # Check if shot hit any opponent ships
+                for ship in opponent.ships:
+                    if shot_location in ship.location:
+                        current_player.successful_shots.append(shot_location)
+                        # Check win condition - all opponent ships hit
+                        all_ship_locations = [loc for s in opponent.ships for loc in s.location]
+                        if all(loc in current_player.successful_shots for loc in all_ship_locations):
+                            self.state.phase = GamePhase.FINISHED
+                            self.state.winner = self.state.idx_player_active
+                        break
+                
+                # Switch turns if game not won
+                if self.state.phase != GamePhase.FINISHED:
+                    self.state.idx_player_active = 1 - self.state.idx_player_active
 
     def get_player_view(self, idx_player: int) -> BattleshipGameState:
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""

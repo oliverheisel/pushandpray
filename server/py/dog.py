@@ -140,6 +140,8 @@ class Dog(Game):
         """ Print the current game state """
         if self.state is None:
             raise ValueError("Game state is not set.")
+        
+        # Game State Header 
         print(f"--- Current Game State ---")
         print(f"Game Phase: {self.state.phase}")
         print(f"Round: {self.state.cnt_round}")
@@ -159,7 +161,7 @@ class Dog(Game):
             print(f"Marbles: {[f'Position: {marble.pos}, Safe: {marble.is_save}' for marble in player.list_marble]}")
         
         print(f"--- End of Game State ---")
-        
+
     def draw_board(self) -> None:
         """ Draw the board with kennels as the starting positions and safe spaces as the final destinations """
         if self.state is None:
@@ -250,12 +252,21 @@ class Dog(Game):
         """ Get the masked state for the active player (e.g. the oppontent's cards are face down)"""
         if not self.state:
             raise ValueError("Game state is not set.")
-        masked_players = []
-        for i, player in enumerate(self.state.list_player):
-            if i == idx_player:
-                masked_players.append(player)
-            else:
-                masked_players.append(PlayerState(name=player.name, list_card=[], list_marble=player.list_marble))
+        
+        # Validate player index
+        if not (0 <= idx_player < len(self.state.list_player)):
+            raise ValueError(f"Invalid player index: {idx_player}")
+        
+        # Mask players' cards (except for the active player)
+        masked_players = [
+            player if i == idx_player else PlayerState(
+                name=player.name,
+                list_card=[],  # Mask cards
+                list_marble=player.list_marble
+            )
+            for i, player in enumerate(self.state.list_player)
+        ]
+
         return GameState(
             cnt_player=self.state.cnt_player,
             phase=self.state.phase,

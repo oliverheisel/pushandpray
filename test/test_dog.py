@@ -142,3 +142,156 @@ def test_move_out_of_kennel_two_cards():
     # Assertions
     assert marble_found, "Error: Player 1 must end with a marble at pos=0."
     assert marble_safe, 'Error: Status of marble at pos=0 must be "is_save"=True.'
+
+def test_get_list_action_no_valid_kennel_moves():
+    """Test get_list_action when all marbles are in the kennel and no valid cards are available."""
+    game = Dog()
+    game.initialize_game()
+
+    player_idx = 0
+    game.state.idx_player_active = player_idx
+    active_player = game.state.list_player[player_idx]
+
+    kennels = game.KENNEL_POSITIONS
+    for i, marble in enumerate(active_player.list_marble):
+        marble.pos = kennels[player_idx][i]
+
+    invalid_cards = [Card(suit='♠', rank='2'), Card(suit='♠', rank='3')]
+    active_player.list_card = invalid_cards
+
+    game.state.bool_card_exchanged = True
+    actions = game.get_list_action()
+
+    assert len(actions) == 0, "Expected no actions when marbles are in the kennel and no valid cards."
+
+
+def test_collision_sends_opponent_marble_to_kennel():
+    """Test that a marble colliding with another player's marble sends it to the kennel."""
+    game = Dog()
+    game.initialize_game()
+
+    player_idx = 0
+    opponent_idx = 1
+    state = game.get_state()
+
+    opponent = state.list_player[opponent_idx]
+    opponent.list_marble[0].pos = 5
+    active_player = state.list_player[player_idx]
+    active_player.list_marble[0].pos = 3
+
+    # Use valid card from the deck
+    card_to_play = state.list_card_draw.pop()
+    card_to_play.rank = '2'
+    active_player.list_card = [card_to_play]
+
+    game.set_state(state)
+    action = Action(card=card_to_play, pos_from=3, pos_to=5)
+    game.apply_action(action)
+
+    opponent_positions = [marble.pos for marble in opponent.list_marble]
+    assert any(pos in game.KENNEL_POSITIONS[opponent_idx] for pos in opponent_positions)
+
+
+def test_joker_card_as_wildcard():
+    """Test that the Joker card can be used as a wildcard for any valid move."""
+    game = Dog()
+    game.initialize_game()
+
+    player_idx = 0
+    state = game.get_state()
+    active_player = state.list_player[player_idx]
+
+    joker_card = next(card for card in state.list_card_draw if card.rank == 'JKR')
+    state.list_card_draw.remove(joker_card)
+    active_player.list_card = [joker_card]
+    active_player.list_marble[0].pos = 4
+
+    game.set_state(state)
+    action = Action(card=joker_card, pos_from=4, pos_to=10)
+    game.apply_action(action)
+
+    new_pos = active_player.list_marble[0].pos
+    assert new_pos == 10, "Joker card did not move marble to position 10."
+
+
+def test_no_valid_actions_with_empty_hand():
+    """Test that no actions are available when a player has no cards."""
+    game = Dog()
+    game.initialize_game()
+
+    player_idx = 0
+    state = game.get_state()
+    active_player = state.list_player[player_idx]
+    active_player.list_card = []
+
+    game.set_state(state)
+    actions = game.get_list_action()
+
+    assert len(actions) == 0, "Expected no valid actions when player has no cards."
+
+
+def test_reshuffle_when_deck_runs_out():
+    """Test reshuffling discard pile into draw pile when no cards are left."""
+    game = Dog()
+    game.initialize_game()
+
+    state = game.get_state()
+    state.list_card_draw = []
+    state.list_card_discard = GameState.LIST_CARD.copy()
+
+    game.set_state(state)
+    game.deal_cards()
+
+    updated_state = game.get_state()
+    assert len(updated_state.list_card_draw) > 0, "Reshuffle failed: Draw pile is still empty."
+    assert len(updated_state.list_card_discard) == 0, "Reshuffle failed: Discard pile was not cleared."
+
+
+def test_marble_moves_into_safe_space():
+    """Test that a marble correctly enters the safe space when moving the exact steps."""
+    game = Dog()
+    game.initialize_game()
+
+    player_idx = 0
+    state = game.get_state()
+    active_player = state.list_player[player_idx]
+
+    entry_point = Dog.SAFE_SPACES[player_idx][0] - 1
+    active_player.list_marble[0].pos = entry_point
+
+    card_to_play = state.list_card_draw.pop()
+    card_to_play.rank = '1'
+    active_player.list_card = [card_to_play]
+
+    game.set_state(state)
+    action = Action(card=card_to_play, pos_from=entry_point, pos_to=Dog.SAFE_SPACES[player_idx][0])
+    game.apply_action(action)
+
+    marble_pos = active_player.list_marble[0].pos
+    assert marble_pos == Dog.SAFE_SPACES[player_idx][0], "Marble did not enter the safe space correctly."
+
+
+def test_move_out_of_kennel_two_cards():
+    """Test: Move out of kennel without marble on the starting position."""
+    game = Dog()
+    game.reset()
+
+    state = game.get_state()
+    idx_player_active = 0
+    state.cnt_round = 0
+    state.idx_player_active = idx_player_active
+    state.bool_card_exchanged = True
+
+    player = state.list_player[idx_player_active]
+    player.list_card = [Card(suit='♦', rank='A')]
+    kennels = game.KENNEL_POSITIONS[idx_player_active]
+    for i, marble in enumerate(player.list_marble):
+        marble.pos = kennels[i]
+
+    game.set_state(state)
+    action = Action(card=Card(suit='♦', rank='A'), pos_from=kennels[0], pos_to=0)
+    game.apply_action(action)
+
+    state = game.get_state()
+    marble_pos = state.list_player[idx_player_active].list_marble[0].pos
+    assert marble_pos == 0, "Marble did not move out of the kennel correctly."

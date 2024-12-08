@@ -607,7 +607,7 @@ class Dog(Game):
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
- apply_action_special_cards
+
             self.state.list_card_discard.extend(active_player.list_card)  # Add all cards from the player's hand to the discard pile
 
             active_player.list_card = []

@@ -638,7 +638,12 @@ class Dog(Game):
                             card_swap=None
                         ))
 
-        return actions_list
+        unique_action_list = []
+        for item in actions_list:
+            if item not in unique_action_list:
+                unique_action_list.append(item)
+
+        return unique_action_list
 
     def apply_action(self, action: Optional[Action]) -> None:
         """Apply the given action to the game."""
@@ -1072,6 +1077,6 @@ if __name__ == '__main__':
             #game.validate_total_cards()
 
             # Optionally exit after a certain number of rounds (for testing)
-            if game.state.cnt_round > 1:  # Example limit
+            if game.state.cnt_round > 4:  # Example limit
                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
                 break

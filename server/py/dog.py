@@ -337,7 +337,8 @@ class Dog(Game):
         if not marbles_outside_kennel:
             return []  # No valid moves if all marbles are in the kennel
 
-        def dfs(remaining: int, moves: List[int], marble_indices: List[int], results: List[List[tuple[int, int]]]) -> None:
+        def dfs(remaining: int, moves: List[int], marble_indices: List[int],
+            results: List[List[tuple[int, int]]]) -> None:
             """Recursive helper to generate splits."""
             if remaining == 0:
                 # Ensure the split uses exactly 7 points and all moves are valid
@@ -417,7 +418,12 @@ class Dog(Game):
         if not marbles_outside_kennel:
             return []  # No valid moves if all marbles are in the kennel
 
-        def dfs(remaining: int, moves: List[int], marble_indices: List[int], results: List[List[tuple[int, int]]]) -> None:
+        def dfs(
+        remaining: int,
+        moves: List[int],
+        marble_indices: List[int],
+        results: List[List[tuple[int, int]]]
+        ) -> None:
             """Recursive helper to generate splits."""
             if remaining == 0:
                 # Ensure the split uses exactly 7 points and all moves are valid
@@ -900,7 +906,7 @@ class Dog(Game):
                 self.state.card_active = action.card
                 self.state.remaining_steps = 7
                 print("SEVEN card detected. Starting split with 7 steps.")
-            
+
             #  Validate pos_from and pos_to are not None before calculating steps
             if action.pos_from is None or action.pos_to is None:
                 raise ValueError("Invalid action: pos_from and pos_to must not be None")
@@ -1138,8 +1144,7 @@ class Dog(Game):
                         pass
                         # print(f"Marble moved to a safe space at position {marble.pos}.")
                     break
-            # else:
-                # raise ValueError(f"No marble found at position {move_action.pos_from} for Player {active_player.name}.")
+
 
     def _handle_card_exchange(self, move_action: Action, active_player: PlayerState) -> None:
         """Handle the card exchange phase."""
@@ -1195,12 +1200,17 @@ class Dog(Game):
         if move_action.pos_from < move_action.pos_to:
             overtaken_positions = list(range(move_action.pos_from + 1, move_action.pos_to + 1))
         else:
-            overtaken_positions = list(range(move_action.pos_from + 1, 64)) + list(range(0, move_action.pos_to + 1)) + list(range(0,))
+            overtaken_positions = (
+            list(range(move_action.pos_from + 1, 64)) +
+            list(range(0, move_action.pos_to + 1))
+            )
 
-        # Exclude any invalid overtaken positions (e.g., own start or safe spaces)
-        # excluded_positions = set(self.START_POSITIONS.values()) 
-        # excluded_positions.update(self.SAFE_SPACES[self.state.idx_player_active])
-        excluded_positions = {marble.pos for player in self.state.list_player for marble in player.list_marble if marble.is_save}
+        excluded_positions = {
+        marble.pos
+        for player in self.state.list_player
+        for marble in player.list_marble
+        if marble.is_save
+        }
 
         # Filter overtaken positions and exclude `pos_to`
         overtaken_positions = [
@@ -1383,16 +1393,11 @@ class Dog(Game):
             card_active=self.state.card_active,
             board_positions=self.state.board_positions
         )
-
-      
 # if __name__ == '__main__':
-        
 #     # Initialize the game
 #     game = Dog()
-
 #     # Initialize a random player (or your AI logic)
     random_player = RandomPlayer()
-
 #     # Ensure the game state is initialized
 #     if game.state is None:
 #         print("Error: Game state is not initialized. Exiting...")
@@ -1408,7 +1413,8 @@ class Dog(Game):
 #             # Display possible actions
 #             print("\nPossible Actions:")
 #             for idx, action in enumerate(game_actions):
-#                 print(f"{idx}: Play {action.card.rank} of {action.card.suit} from {action.pos_from} to {action.pos_to}")
+#                 print(f"{idx}: Play {action.card.rank} of {action.card.suit} "
+#                       f"from {action.pos_from} to {action.pos_to}")
 
             # Select an action (random in this example)
 #            selected_action = random_player.select_action(game.get_state(), game_actions)
@@ -1452,4 +1458,3 @@ class Dog(Game):
 #             if game.state.cnt_round > 15:
 #                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
 #                 break
-

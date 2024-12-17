@@ -614,6 +614,9 @@ class Dog(Game):
         marbles_in_kennel = [m for m in active_player.list_marble if m.pos in player_kennel]
         num_in_kennel = len(marbles_in_kennel)
 
+        # Check if all marbles of the active player are in the finish space
+        all_in_finish = all(marble.pos in self.SAFE_SPACES[player_idx] for marble in active_player.list_marble)
+
         # Generate actions for each card
         for card in current_cards:
             card_values = self._get_card_value(card)
@@ -709,12 +712,28 @@ class Dog(Game):
             actions_list.extend(
                 self._get_normal_move_actions(card, card_values, active_player.list_marble, player_idx))
 
+            # Support partner's marbles if all marbles are in finish
+            if all_in_finish:
+                idx_partner = self.TEAM_MAPPING[player_idx]
+                partner = self.state.list_player[idx_partner]
+
+                for marble in partner.list_marble:
+                    for steps in card_values:
+                        pos_to = (marble.pos + steps) % self.BOARD_SIZE  # Directly add steps and wrap position
+                        actions_list.append(Action(card=card, pos_from=marble.pos, pos_to=pos_to))
+                    break
+
         unique_action_list = []
         for item in actions_list:
             if item not in unique_action_list:
                 unique_action_list.append(item)
 
         return unique_action_list
+
+    def _is_position_blocked(self, pos: int) -> bool:
+        """Check if a position is blocked by any marble."""
+        all_marbles = self._get_all_marbles()
+        return any(marble["position"] == pos for marble in all_marbles)
 
     def _is_card_exchange_phase(self) -> bool:
         """Check if the card exchange phase is still ongoing."""
@@ -854,7 +873,7 @@ class Dog(Game):
 
         #check if only a joker was swapped
         if action.card.rank == 'JKR' and action.card_swap is not None:
-            print(f"{active_player.name} exchanges {action.card.rank} wit {action.card_swap.rank}.")
+            print(f"{active_player.name} exchanges {action.card.rank} with {action.card_swap.rank}.")
             active_player.list_card.append(action.card_swap)
             active_player.list_card.remove(action.card)
             self.state.card_active = action.card_swap
@@ -896,9 +915,6 @@ class Dog(Game):
             # Update remaining steps
             self.state.remaining_steps -= steps_taken
 
-            # If all steps are completed, finalize SEVEN handling
-            assert self.state
-
             # Check if remaining_steps is not None and handle completion of the SEVEN card
             if self.state.remaining_steps is not None and self.state.remaining_steps <= 0:
                 active_player.list_card.remove(action.card)
@@ -909,9 +925,22 @@ class Dog(Game):
                 self._check_game_finished()
             return
 
-        self._handle_normal_move(action, active_player)
-        # Check for collision with other players' marbles
-        self._check_collisions(action)
+        # Allow moving partner's marble to 37
+        marble_moved = False
+        idx_partner = self.TEAM_MAPPING[self.state.idx_player_active]
+        partner_player = self.state.list_player[idx_partner]
+        for marble in partner_player.list_marble:
+            if marble.pos == action.pos_from:
+                print(f"Moving partner marble from {action.pos_from} to {action.pos_to}")
+                marble.pos = action.pos_to
+                marble_moved = True
+                break
+
+        # If partner's marble not moved, proceed with normal move
+        if not marble_moved:
+            self._handle_normal_move(action, active_player)
+            # Check for collision with other players' marbles
+            self._check_collisions(action)
         # Remove the played card from the player's hand
         active_player.list_card.remove(action.card)
         # Add the played card to the discard pile

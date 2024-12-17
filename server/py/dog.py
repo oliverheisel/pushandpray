@@ -1155,19 +1155,15 @@ class Dog(Game):
             for marble in player.list_marble:
 
                 # Skip checking the moving marble itself
-                if marble == moving_marble:
-                    continue
+                # if marble == moving_marble:
+                #    continue
 
                 # Skip marbles in safe spaces
-                if marble.is_save:
-                    continue
+                # if marble.is_save:
+                #    continue
 
-                # Allow eating opponent's marble on their start position
+                # Check for collision at the destination
                 if marble.pos == move_action.pos_to:
-                    # Protect active player's own marble at their start position
-                    if player_idx == idx_active and marble.pos == self.START_POSITIONS[idx_active]:
-                        continue
-
                     print(f"Collision! Player {player.name}'s marble at position {marble.pos} "
                         f"is sent back to the kennel.")
 

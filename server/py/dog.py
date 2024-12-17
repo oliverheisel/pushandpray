@@ -881,7 +881,7 @@ class Dog(Game):
                 self.state.card_active = action.card
                 self.state.remaining_steps = 7
                 print("SEVEN card detected. Starting split with 7 steps.")
-            
+
             #  Validate pos_from and pos_to are not None before calculating steps
             if action.pos_from is None or action.pos_to is None:
                 raise ValueError("Invalid action: pos_from and pos_to must not be None")
@@ -1135,24 +1135,53 @@ class Dog(Game):
             print("All players have completed their card exchanges.")
 
     def _check_collisions(self, move_action: Action) -> None:
-        """Check for collisions with other players' marbles."""
+        """Check for collisions with marbles, including self and opponent's marbles."""
         assert self.state
 
         idx_active = self.state.idx_player_active
-        for other_idx, other_player in enumerate(self.state.list_player):
-            if other_idx == idx_active:
-                continue  # Skip the active player
+        active_player = self.state.list_player[idx_active]
 
-            for other_marble in other_player.list_marble:
-                if other_marble.pos == move_action.pos_to:  # Collision detected
-                    print(f"Collision! Player {other_player.name}'s marble at position {other_marble.pos} "
-                        "is sent back to the kennel.")
+        # Identify the marble that is moving
+        moving_marble = next(
+            (marble for marble in active_player.list_marble if marble.pos == move_action.pos_from),
+            None
+        )
 
-                    for pos in self.KENNEL_POSITIONS[other_idx]:
-                        if all(marble.pos != pos for player in self.state.list_player for marble in player.list_marble):
-                            other_marble.pos = pos
-                            other_marble.is_save = False
+        if not moving_marble:
+            return  # No valid marble found for the move
+
+        # Loop through all players to detect collisions
+        for player_idx, player in enumerate(self.state.list_player):
+            for marble in player.list_marble:
+
+                # Skip checking the moving marble itself
+                if marble == moving_marble:
+                    continue
+
+                # Skip marbles in safe spaces
+                if marble.is_save:
+                    continue
+
+                # Allow eating opponent's marble on their start position
+                if marble.pos == move_action.pos_to:
+                    # Protect active player's own marble at their start position
+                    if player_idx == idx_active and marble.pos == self.START_POSITIONS[idx_active]:
+                        continue
+
+                    print(f"Collision! Player {player.name}'s marble at position {marble.pos} "
+                        f"is sent back to the kennel.")
+
+                    # Send the collided marble back to its kennel
+                    for pos in self.KENNEL_POSITIONS[player_idx]:
+                        if all(m.pos != pos for p in self.state.list_player for m in p.list_marble):
+                            marble.pos = pos
+                            marble.is_save = False
                             break
+
+
+
+
+
 
     def _handle_overtaking(self, move_action: Action) -> None:
         """Handle overtaking logic for SEVEN card."""
@@ -1169,7 +1198,7 @@ class Dog(Game):
             overtaken_positions = list(range(move_action.pos_from + 1, 64)) + list(range(0, move_action.pos_to + 1)) + list(range(0,))
 
         # Exclude any invalid overtaken positions (e.g., own start or safe spaces)
-        # excluded_positions = set(self.START_POSITIONS.values()) 
+        # excluded_positions = set(self.START_POSITIONS.values())
         # excluded_positions.update(self.SAFE_SPACES[self.state.idx_player_active])
         excluded_positions = {marble.pos for player in self.state.list_player for marble in player.list_marble if marble.is_save}
 
@@ -1355,9 +1384,9 @@ class Dog(Game):
             board_positions=self.state.board_positions
         )
 
-      
+
 # if __name__ == '__main__':
-        
+
 #     # Initialize the game
 #     game = Dog()
 

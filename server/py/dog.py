@@ -835,6 +835,12 @@ class Dog(Game):
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
+
+            if self.state.card_active is not None:
+                self.state = copy.deepcopy(self.state_backup)
+                self.state.card_active = None
+                self.state.remaining_steps = None
+
             possible_actions = self.get_list_action()
             if not possible_actions:
                 # No moves possible: fold scenario
@@ -843,11 +849,6 @@ class Dog(Game):
             else:
                 # Moves are available, but player passed turn: do not discard/clear hand
                 pass
-
-            if self.state.card_active is not None:
-                self.state = copy.deepcopy(self.state_backup)
-                self.state.card_active = None
-                self.state.remaining_steps = None
 
             self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
 
@@ -1190,7 +1191,7 @@ class Dog(Game):
             overtaken_positions = list(range(move_action.pos_from + 1, 64)) + list(range(0, move_action.pos_to + 1)) + list(range(0,))
 
         # Exclude any invalid overtaken positions (e.g., own start or safe spaces)
-        # excluded_positions = set(self.START_POSITIONS.values()) 
+        # excluded_positions = set(self.START_POSITIONS.values())
         # excluded_positions.update(self.SAFE_SPACES[self.state.idx_player_active])
         excluded_positions = {marble.pos for player in self.state.list_player for marble in player.list_marble if marble.is_save}
 
@@ -1445,4 +1446,3 @@ class Dog(Game):
 #             if game.state.cnt_round > 15:
 #                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
 #                 break
-

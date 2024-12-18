@@ -891,7 +891,7 @@ class Dog(Game):
             self.create_state_backup()
             self.state.card_active = action.card
             self.state.remaining_steps = 7
-            print("SEVEN card detected. Starting split with 7 steps.")
+            # print("SEVEN card detected. Starting split with 7 steps.")
 
         # if action.card.rank == '7' and self.state.card_active.rank == '7':
         if self.state.card_active is not None and self.state.card_active.rank == '7':
@@ -994,7 +994,7 @@ class Dog(Game):
                     return
 
                 # Player now helps their teammate
-                print(f"Player {player.name} has finished and will help teammate {teammate.name}.")
+                # print(f"Player {player.name} has finished and will help teammate {teammate.name}.")
                 self.state.idx_player_active = teammate_idx
                 return
 
@@ -1205,14 +1205,14 @@ class Dog(Game):
 
         # Iterate through all players to identify overtaken marbles
         for player_idx, player in enumerate(self.state.list_player):
-            print(f"Processing Player {player_idx + 1}: {player.name}")
+            # print(f"Processing Player {player_idx + 1}: {player.name}")
             for marble in player.list_marble:
                 if marble.pos in overtaken_positions:
 
                     # Log overtaking event
-                    print(f"Overtaking detected! Marble at position {marble.pos} is sent back to the kennel.")
-                    kennel_positions = self.KENNEL_POSITIONS[player_idx]
-                    print(f"Player {player_idx}'s kennel positions: {kennel_positions}")
+                    # print(f"Overtaking detected! Marble at position {marble.pos} is sent back to the kennel.")
+                    # kennel_positions = self.KENNEL_POSITIONS[player_idx]
+                    # print(f"Player {player_idx}'s kennel positions: {kennel_positions}")
                     # Send the overtaken marble back to the kennel
                     for pos in self.KENNEL_POSITIONS[player_idx]:
                         if all(
@@ -1220,12 +1220,13 @@ class Dog(Game):
                         ):
                             marble.pos = pos
                             marble.is_save = False
-                            print(f"Marble moved to kennel position {pos} for Player {player_idx}.")
-                            print("Visualizing marble positions after modification:")
+                            # print(f"Marble moved to kennel position {pos} for Player {player_idx}.")
+                            # print("Visualizing marble positions after modification:")
                             for player_idx, player in enumerate(self.state.list_player):
-                                print(f"Player {player_idx + 1}: {player.name}")
-                                marble_positions = [marble.pos for marble in player.list_marble]
-                                print(f"  Marble positions: {marble_positions}")
+                                pass
+                                # print(f"Player {player_idx + 1}: {player.name}")
+                                # marble_positions = [marble.pos for marble in player.list_marble]
+                                # print(f"  Marble positions: {marble_positions}")
 
 
     def get_cards_per_round(self) -> int:

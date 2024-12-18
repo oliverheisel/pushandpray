@@ -136,23 +136,22 @@ class Dog(Game):
 
     def print_state(self) -> None:
         """ Print the current game state """
-        if self.state is None:
-            raise ValueError("Game state is not set.")
+        assert self.state
         print(f"Game Phase: {self.state.phase}")
         print(f"Round: {self.state.cnt_round}")
         print(f"Active Player: {self.state.list_player[self.state.idx_player_active].name}")
         for player_idx, player in enumerate(self.state.list_player):
             print(f"\nPlayer {player_idx + 1}: {player.name}")
             # Check for empty or invalid card lists
-            if not player.list_card:
-                print("Warning: No cards in player's hand.")
-            else:
-                print(f"Cards: {[f'{card.rank} of {card.suit}' for card in player.list_card]}")
+            # if not player.list_card:
+            #     print("Warning: No cards in player's hand.")
+            # else:
+            #     print(f"Cards: {[f'{card.rank} of {card.suit}' for card in player.list_card]}")
             # Ensure marbles list is valid
-            if not player.list_marble:
-                print("Warning: No marbles for the player.")
-            else:
-                print(f'''Marbles: {[f'Position: {m.pos}, Safe: {m.is_save}' for m in player.list_marble]}''')
+            # if not player.list_marble:
+            #     print("Warning: No marbles for the player.")
+            # else:
+            #     print(f'''Marbles: {[f'Position: {m.pos}, Safe: {m.is_save}' for m in player.list_marble]}''')
 
 
     def draw_board(self) -> None:
@@ -333,8 +332,7 @@ class Dog(Game):
     def _handle_seven_card(self, card: Card, active_marbles: List[Marble]) -> List[Action]:
         """Generate all possible split actions for the `7` card."""
 
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         player_idx = self.state.idx_player_active
         kennels = self.KENNEL_POSITIONS
@@ -413,8 +411,7 @@ class Dog(Game):
     def grouped_actions(self, card: Card, active_marbles: List[Marble]) -> List[List[Action]]:
         """Generate all possible split actions for the `7` card."""
 
-        if not self.state:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         player_idx = self.state.idx_player_active
         kennels = self.KENNEL_POSITIONS
@@ -956,7 +953,7 @@ class Dog(Game):
         partner_player = self.state.list_player[idx_partner]
         for marble in partner_player.list_marble:
             if marble.pos == action.pos_from:
-                print(f"Moving partner marble from {action.pos_from} to {action.pos_to}")
+                # print(f"Moving partner marble from {action.pos_from} to {action.pos_to}")
                 marble.pos = action.pos_to
                 marble_moved = True
                 break
@@ -1023,7 +1020,7 @@ class Dog(Game):
                     return
 
                 # Player now helps their teammate
-                print(f"Player {player.name} has finished and will help teammate {teammate.name}.")
+                # print(f"Player {player.name} has finished and will help teammate {teammate.name}.")
                 self.state.idx_player_active = teammate_idx
                 return
 
@@ -1065,8 +1062,7 @@ class Dog(Game):
         """Handle the Jack card action (swap marbles)."""
 
         # Ensure the game state is not None
-        if self.state is None:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         # Ensure pos_from and pos_to are not None
         if move_action.pos_from is None or move_action.pos_to is None:
@@ -1168,8 +1164,7 @@ class Dog(Game):
 
     def _handle_card_exchange(self, move_action: Action, active_player: PlayerState) -> None:
         """Handle the card exchange phase."""
-        if self.state is None:
-            raise ValueError("Game state is not set.")
+        assert self.state
 
         idx_active = self.state.idx_player_active
         idx_partner = (idx_active + 2) % self.state.cnt_player

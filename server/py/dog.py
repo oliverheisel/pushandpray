@@ -1198,9 +1198,9 @@ class Dog(Game):
         # excluded_positions.update(self.SAFE_SPACES[self.state.idx_player_active])
         excluded_positions = {marble.pos for player in self.state.list_player for marble in player.list_marble if marble.is_save}
 
-        # Filter overtaken positions and exclude `pos_to`
+        # Filter overtaken positions and exclude `pos_to` #and pos != move_action.pos_to
         overtaken_positions = [
-            pos for pos in overtaken_positions if pos not in excluded_positions and pos != move_action.pos_to
+            pos for pos in overtaken_positions if pos not in excluded_positions 
         ]
 
         # Iterate through all players to identify overtaken marbles

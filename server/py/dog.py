@@ -5,6 +5,7 @@ This module contains the core game logic and data structures for the Dog card ga
 
 # runcmd: cd ../.. & venv\Scripts\python server/py/dog_template.py
 import random
+import copy
 from itertools import chain
 from typing import List, Optional, Dict, Any, Set
 from server.py.game import Game
@@ -65,6 +66,7 @@ class Dog(Game):
     def __init__(self) -> None:
         """ Game initialization (set_state call not necessary, we expect 4 players) """
         self.state: Optional[GameState] = None
+        self.state_backup: Optional[GameState] = None
         self.initialize_game()  # Ensure the game state is initialized
 
     def initialize_game(self) -> None:
@@ -109,6 +111,8 @@ class Dog(Game):
         # Deal initial cards (6 cards in first round)
         self.deal_cards()
 
+        self.create_state_backup()
+
     def reset(self) -> None:
         """ Reset the game to its initial state """
         self.initialize_game()
@@ -123,6 +127,12 @@ class Dog(Game):
         """ Get the complete, unmasked game state """
         assert  self.state
         return self.state
+
+    def create_state_backup(self) -> GameState:
+        """ Saves after turning player the current state to fall back """
+        assert  self.state
+        self.state_backup = copy.deepcopy(self.state)
+        return self.state_backup
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -826,6 +836,12 @@ class Dog(Game):
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
+            if self.state.card_active is not None:
+                self.state = copy.deepcopy(self.state_backup)
+                assert self.state
+                self.state.card_active = None
+                self.state.remaining_steps = None
+
             possible_actions = self.get_list_action()
             if not possible_actions:
                 # No moves possible: fold scenario
@@ -870,21 +886,29 @@ class Dog(Game):
             return
 
         # Handle Seven card
-        if action.card.rank == '7':
-            if self.state.card_active is None:
-                # Initialize SEVEN handling if it's the first split
-                self.state.card_active = action.card
-                self.state.remaining_steps = 7
+        if action.card.rank == '7'and self.state.card_active is None and self.state.remaining_steps is None:
+            # Initialize SEVEN handling if it's the first split
+            self.create_state_backup()
+            self.state.card_active = action.card
+            self.state.remaining_steps = 7
+            print("SEVEN card detected. Starting split with 7 steps.")
 
-            if self.state.remaining_steps is None:
-                # Initialize SEVEN handling if it's the first split
-                self.state.card_active = action.card
-                self.state.remaining_steps = 7
-                print("SEVEN card detected. Starting split with 7 steps.")
-            
+        # if action.card.rank == '7' and self.state.card_active.rank == '7':
+        if self.state.card_active is not None and self.state.card_active.rank == '7':
             #  Validate pos_from and pos_to are not None before calculating steps
             if action.pos_from is None or action.pos_to is None:
-                raise ValueError("Invalid action: pos_from and pos_to must not be None")
+                #move not possible
+                #self.state = copy.deepcopy(self.state_backup)
+                #self.state.card_active = None
+                #self.state.remaining_steps = None
+                #self.state = copy.deepcopy(self.state_backup)
+                #active_player.list_card.remove(action.card)
+                #self.state.list_card_discard.append(action.card)
+                #self.state.list_card_discard.extend(active_player.list_card)
+                #active_player.list_card.clear()
+                #self.state.idx_player_active = (self.state.idx_player_active + 1) % len(self.state.list_player)
+                return
+                #raise ValueError("Invalid action: pos_from and pos_to must not be None")
 
             # Process the current split step
             # if statement for safe space
@@ -894,7 +918,8 @@ class Dog(Game):
             self._handle_normal_move(action, active_player)
 
             # Update remaining steps
-            self.state.remaining_steps -= steps_taken
+            if self.state.remaining_steps is not None:
+                self.state.remaining_steps -= steps_taken
 
             # If all steps are completed, finalize SEVEN handling
             assert self.state
@@ -1169,7 +1194,7 @@ class Dog(Game):
             overtaken_positions = list(range(move_action.pos_from + 1, 64)) + list(range(0, move_action.pos_to + 1)) + list(range(0,))
 
         # Exclude any invalid overtaken positions (e.g., own start or safe spaces)
-        # excluded_positions = set(self.START_POSITIONS.values()) 
+        # excluded_positions = set(self.START_POSITIONS.values())
         # excluded_positions.update(self.SAFE_SPACES[self.state.idx_player_active])
         excluded_positions = {marble.pos for player in self.state.list_player for marble in player.list_marble if marble.is_save}
 
@@ -1355,9 +1380,10 @@ class Dog(Game):
             board_positions=self.state.board_positions
         )
 
-      
+
+
 # if __name__ == '__main__':
-        
+
 #     # Initialize the game
 #     game = Dog()
 
@@ -1423,4 +1449,3 @@ class Dog(Game):
 #             if game.state.cnt_round > 15:
 #                 print(f"Ending game for testing after {game.state.cnt_round} rounds.")
 #                 break
-

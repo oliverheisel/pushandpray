@@ -132,6 +132,7 @@ class Dog(Game):
         """ Saves after turning player the current state to fall back """
         assert  self.state
         self.state_backup = copy.deepcopy(self.state)
+        return self.state_backup
 
     def print_state(self) -> None:
         """ Print the current game state """
@@ -835,9 +836,9 @@ class Dog(Game):
         # Handle the case where no action is provided (skip turn)
         if action is None:
             print("No action provided. Advancing the active player.")
-
             if self.state.card_active is not None:
                 self.state = copy.deepcopy(self.state_backup)
+                assert self.state
                 self.state.card_active = None
                 self.state.remaining_steps = None
 
@@ -892,7 +893,8 @@ class Dog(Game):
             self.state.remaining_steps = 7
             print("SEVEN card detected. Starting split with 7 steps.")
 
-        if action.card.rank == '7' and self.state.card_active.rank == '7':
+        # if action.card.rank == '7' and self.state.card_active.rank == '7':
+        if self.state.card_active is not None and self.state.card_active.rank == '7':
             #  Validate pos_from and pos_to are not None before calculating steps
             if action.pos_from is None or action.pos_to is None:
                 #move not possible
@@ -916,7 +918,8 @@ class Dog(Game):
             self._handle_normal_move(action, active_player)
 
             # Update remaining steps
-            self.state.remaining_steps -= steps_taken
+            if self.state.remaining_steps is not None:
+                self.state.remaining_steps -= steps_taken
 
             # If all steps are completed, finalize SEVEN handling
             assert self.state
